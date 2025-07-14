@@ -1,0 +1,49 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🧰 Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: 📦 Download JavaFX SDK
+        run: |
+          Invoke-WebRequest -Uri https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip -OutFile javafx.zip
+          Expand-Archive javafx.zip -DestinationPath .
+          Rename-Item -Path "openjfx-21.0.1_windows-x64_bin-sdk" -NewName "javafx-sdk"
+
+      - name: 🛠️ Build project with Maven
+        run: mvn clean package
+
+      - name: 📦 Create EXE using jpackage
+        run: |
+          jpackage `
+            --type exe `
+            --input target `
+            --dest output `
+            --name DocOverlay `
+            --main-jar docoverlay-1.0-SNAPSHOT.jar `
+            --main-class com.example.App `
+            --module-path javafx-sdk\lib `
+            --add-modules javafx.controls,javafx.fxml,javafx.base,javafx.graphics,java.desktop `
+            --java-options "--enable-preview" `
+            --app-version 1.0
+
+      - name: 📤 Upload the EXE artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: DocOverlay-Installer
+          path: output\DocOverlay-1.0.exe
