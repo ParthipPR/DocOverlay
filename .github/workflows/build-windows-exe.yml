@@ -19,9 +19,30 @@ jobs:
         distribution: 'temurin'
         java-version: '21'
 
-    - name: Download JavaFX SDK
-      run: Invoke-WebRequest -Uri https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip -OutFile javafx.zip
+    - name: Download and Extract JavaFX SDK
       shell: pwsh
+      run: |
+        Invoke-WebRequest -Uri https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip -OutFile javafx.zip
+
+        # Confirm the file exists
+        if (-Not (Test-Path "javafx.zip")) {
+          Write-Error "❌ javafx.zip was not downloaded."
+          Exit 1
+        }
+
+        # Extract and list contents
+        Expand-Archive -Path javafx.zip -DestinationPath .
+        Write-Host "✅ Extracted JavaFX zip:"
+        Get-ChildItem -Recurse
+
+        # Try to find the extracted folder
+        $folder = Get-ChildItem -Directory | Where-Object { $_.Name -like "openjfx*" }
+        if ($folder) {
+          Rename-Item -Path $folder.FullName -NewName "javafx-sdk"
+        } else {
+          Write-Error "❌ JavaFX folder not found after extraction."
+          Exit 1
+        }
 
     - name: Unzip JavaFX SDK and Rename Folder
       run: |
