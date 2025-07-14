@@ -24,12 +24,12 @@ jobs:
       shell: pwsh
 
     - name: Unzip JavaFX SDK
-      run: Expand-Archive -Path javafx.zip -DestinationPath .
+      run: |
+        Expand-Archive -Path javafx.zip -DestinationPath .
+        $folder = Get-ChildItem -Directory | Where-Object { $_.Name -like "openjfx*" }
+        Rename-Item -Path $folder.FullName -NewName "javafx-sdk"
       shell: pwsh
 
-    - name: Rename JavaFX folder
-      run: Rename-Item -Path "openjfx-21.0.1_windows-x64_bin-sdk" -NewName "javafx-sdk"
-      shell: pwsh
 
     - name: Build with Maven
       run: mvn clean package
