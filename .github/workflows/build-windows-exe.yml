@@ -1,8 +1,8 @@
-name: Windows EXE Build
+name: Build Windows EXE
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -10,74 +10,40 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Set up JDK 21
+    - name: Set up Java
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
 
-    - name: Download and Extract JavaFX SDK
+    - name: Download JavaFX SDK
       shell: pwsh
       run: |
         Invoke-WebRequest -Uri https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip -OutFile javafx.zip
-
-        # Confirm the file exists
-        if (-Not (Test-Path "javafx.zip")) {
-          Write-Error "❌ javafx.zip was not downloaded."
-          Exit 1
-        }
-
-        # Extract and list contents
         Expand-Archive -Path javafx.zip -DestinationPath .
-        Write-Host "✅ Extracted JavaFX zip:"
-        Get-ChildItem -Recurse
+        Rename-Item -Path "javafx-sdk-21.0.1" -NewName "javafx-sdk"
 
-        # Try to find the extracted folder
-        $folder = Get-ChildItem -Directory | Where-Object { $_.Name -like "openjfx*" }
-        if ($folder) {
-          Rename-Item -Path $folder.FullName -NewName "javafx-sdk"
-        } else {
-          Write-Error "❌ JavaFX folder not found after extraction."
-          Exit 1
-        }
-
-    - name: Unzip JavaFX SDK and Rename Folder
-      run: |
-        Expand-Archive -Path javafx.zip -DestinationPath .
-        $folder = Get-ChildItem -Directory | Where-Object { $_.Name -like "openjfx*" }
-        if ($folder) {
-          Rename-Item -Path $folder.FullName -NewName "javafx-sdk"
-        } else {
-          Write-Error "JavaFX folder not found after extraction."
-          Exit 1
-        }
-      shell: pwsh
-
-
-
-    - name: Build with Maven
+    - name: Set up Maven
       run: mvn clean package
 
-    - name: Package with jpackage
+    - name: Package using jpackage
       run: |
-        jpackage ^
-          --type exe ^
-          --name DocOverlay ^
-          --input target ^
-          --main-jar docoverlay-1.0-SNAPSHOT.jar ^
-          --main-class com.example.App ^
-          --java-options "--enable-preview" ^
-          --module-path javafx-sdk\lib ^
-          --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base,java.desktop ^
-          --dest output ^
+        jpackage `
+          --type exe `
+          --name DocOverlay `
+          --input target `
+          --main-jar docoverlay-1.0-SNAPSHOT.jar `
+          --main-class com.example.App `
+          --module-path javafx-sdk/lib `
+          --add-modules javafx.controls,javafx.fxml,javafx.base,javafx.graphics,java.desktop `
+          --dest output `
           --app-version 1.0
-      shell: cmd
 
-    - name: Upload EXE Artifact
+    - name: Upload .exe Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: DocOverlayInstaller
-        path: output/DocOverlay-1.0.exe
+        name: DocOverlay-Installer
+        path: output/**
