@@ -40,11 +40,9 @@ jobs:
           $jmods = "$env:JAVA_HOME\\jmods"
           jlink `
             --module-path "$javafxLib;$jmods" `
-            --add-modules java.base,java.desktop,java.logging,javafx.controls,javafx.fxml `
+            --add-modules java.base,java.desktop,java.logging,javafx.controls,javafx.fxml,javafx.graphics
             --output custom-runtime `
             --strip-debug --no-header-files --no-man-pages --compress=2
-
-          
 
       - name: Package EXE
         shell: pwsh
@@ -57,8 +55,10 @@ jobs:
             --main-class com.example.App `
             --runtime-image custom-runtime `
             --dest output `
+            --app-version 1.0 `
             --win-console `
-            --app-version 1.0
+            --java-options "-Dprism.order=sw"
+
 
 
       - name: Upload .exe
