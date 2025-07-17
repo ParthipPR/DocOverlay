@@ -24,8 +24,9 @@ jobs:
         run: |
           Invoke-WebRequest -Uri https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip -OutFile javafx.zip
           Expand-Archive -Path javafx.zip -DestinationPath .
-          Rename-Item -Path "openjfx-21.0.1_windows-x64_bin-sdk" -NewName "javafx-sdk"
-
+          $extracted = Get-ChildItem -Directory -Filter "openjfx*" | Select-Object -First 1
+          Rename-Item -Path $extracted.FullName -NewName "javafx-sdk"
+          
       - name: Build with Maven
         run: mvn clean package
 
