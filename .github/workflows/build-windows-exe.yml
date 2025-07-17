@@ -40,7 +40,7 @@ jobs:
           $jmods = "$env:JAVA_HOME\\jmods"
           jlink `
             --module-path "$javafxLib;$jmods" `
-            --add-modules java.base,java.desktop,java.logging,javafx.controls,javafx.fxml,javafx.graphics
+            --add-modules java.base,java.desktop,java.logging,javafx.controls,javafx.fxml,javafx.graphics `
             --output custom-runtime `
             --strip-debug --no-header-files --no-man-pages --compress=2
 
