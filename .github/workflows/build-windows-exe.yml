@@ -36,11 +36,15 @@ jobs:
       - name: Create custom JRE
         shell: pwsh
         run: |
+          $javafxLib = "javafx-sdk\\lib"
+          $jmods = "$env:JAVA_HOME\\jmods"
           jlink `
-            --module-path "javafx-sdk\lib;$env:JAVA_HOME\jmods" `
+            --module-path "$javafxLib;$jmods" `
             --add-modules java.base,java.desktop,java.logging,javafx.controls,javafx.fxml `
             --output custom-runtime `
             --strip-debug --no-header-files --no-man-pages --compress=2
+
+          
 
       - name: Package EXE
         shell: pwsh
@@ -53,7 +57,9 @@ jobs:
             --main-class com.example.App `
             --runtime-image custom-runtime `
             --dest output `
+            --win-console `
             --app-version 1.0
+
 
       - name: Upload .exe
         uses: actions/upload-artifact@v4
