@@ -1,9 +1,8 @@
-name: Build Windows App Image
+name: Build Windows EXE
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
 
 jobs:
   build:
@@ -19,16 +18,23 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Download and Extract JavaFX SDK
+      - name: Download JavaFX SDK
+        shell: pwsh
         run: |
-          Invoke-WebRequest -Uri https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip -OutFile javafx.zip
-          Expand-Archive -Path javafx.zip -DestinationPath .
-          Rename-Item -Path "javafx-sdk-21.0.1" -NewName "javafx-sdk"
+          Invoke-WebRequest -Uri "https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip" -OutFile "javafx.zip"
+          Expand-Archive -Path "javafx.zip" -DestinationPath "."
+          $folder = Get-ChildItem -Directory | Where-Object { $_.Name -like "javafx-sdk-*" }
+          if ($folder) {
+            Rename-Item -Path $folder.FullName -NewName "javafx-sdk"
+          } else {
+            Write-Error "❌ JavaFX folder not found after extraction."
+          }
 
       - name: Build with Maven
         run: mvn clean package
 
-      - name: Create custom runtime with jlink
+      - name: Create custom Java runtime
+        shell: pwsh
         run: |
           jlink `
             --module-path "javafx-sdk\lib;$env:JAVA_HOME\jmods" `
@@ -36,8 +42,8 @@ jobs:
             --output custom-runtime `
             --strip-debug --compress=2 --no-header-files --no-man-pages
 
-
-      - name: Package App Image
+      - name: Package EXE with jpackage
+        shell: pwsh
         run: |
           jpackage `
             --type exe `
@@ -51,9 +57,8 @@ jobs:
             --win-shortcut `
             --app-version 1.0
 
-
-      - name: Upload App Image
+      - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
-          name: DocOverlay-AppImage
-          path: output/DocOverlay
+          name: DocOverlay-Windows-EXE
+          path: output/*.exe
