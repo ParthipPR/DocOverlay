@@ -24,23 +24,19 @@ jobs:
         run: |
           Invoke-WebRequest -Uri https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip -OutFile javafx.zip
           Expand-Archive -Path javafx.zip -DestinationPath .
-          
-          # List all folders after extraction
-          $dirs = Get-ChildItem -Directory
-          Write-Output "Extracted folders:"
-          $dirs | ForEach-Object { Write-Output $_.FullName }
 
-          # Try to find the folder by name
-          $extracted = Get-ChildItem -Directory | Where-Object { $_.Name -like "openjfx-21.0.1_windows-x64_bin-sdk" }
+          # Find extracted folder starting with 'javafx-sdk' or similar
+          $extracted = Get-ChildItem -Directory | Where-Object { $_.Name -like "javafx-sdk*" }
 
           if ($extracted.Count -eq 0) {
             Write-Error "❌ JavaFX folder not found after extraction."
             exit 1
           }
 
-          # Rename to expected name
+          # Rename it to expected path
           Rename-Item -Path $extracted.FullName -NewName "javafx-sdk"
-          Write-Output "✅ Renamed JavaFX SDK folder to 'javafx-sdk'"
+          Write-Output "✅ JavaFX SDK folder renamed to 'javafx-sdk'"
+
 
 
       - name: Build with Maven
