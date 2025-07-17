@@ -1,67 +1,57 @@
-name: Build Windows EXE with JavaFX
+name: Build Windows EXE
 
 on:
   push:
-    branches: [ master ]
-  workflow_dispatch:
+    branches:
+      - master
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Cache Maven dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2
-          key: maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: maven-
-
-      - name: Build with Maven
-        run: mvn clean package
-
       - name: Download JavaFX SDK
         run: |
           Invoke-WebRequest -Uri https://download2.gluonhq.com/openjfx/21.0.1/openjfx-21.0.1_windows-x64_bin-sdk.zip -OutFile javafx.zip
           Expand-Archive -Path javafx.zip -DestinationPath .
-          Rename-Item -Path "javafx-sdk-21.0.1" -NewName "javafx-sdk"
+          Rename-Item -Path "openjfx-21.0.1_windows-x64_bin-sdk" -NewName "javafx-sdk"
 
-      - name: Create custom Java runtime with jlink
+      - name: Build with Maven
+        run: mvn clean package
+
+      - name: Create runtime image with jlink
         run: |
-          jlink --module-path "$Env:JAVA_HOME\jmods;javafx-sdk\lib" `
-                --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base,java.desktop `
-                --output custom-runtime `
-                --strip-debug `
-                --compress 2 `
-                --no-header-files `
-                --no-man-pages
+          jlink `
+            --module-path "javafx-sdk\lib";"%JAVA_HOME%\jmods" `
+            --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base `
+            --output custom-runtime `
+            --strip-debug --compress 2 --no-header-files --no-man-pages
 
-      - name: Package with jpackage (EXE)
+      - name: Package standalone EXE
         run: |
           jpackage `
-            --type installer `
+            --type exe `
             --name DocOverlay `
             --input target `
             --main-jar docoverlay-1.0-SNAPSHOT.jar `
             --main-class com.example.App `
             --runtime-image custom-runtime `
             --dest output `
-            --win-dir-chooser `
             --win-menu `
             --win-shortcut `
             --app-version 1.0
 
-      - name: Upload Installer
+      - name: Upload Standalone EXE
         uses: actions/upload-artifact@v4
         with:
-          name: DocOverlay-Windows-Installer
+          name: DocOverlay-Windows-EXE
           path: output/*.exe
