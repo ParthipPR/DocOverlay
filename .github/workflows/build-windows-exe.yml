@@ -64,6 +64,7 @@ jobs:
             --dest output `
             --win-menu `
             --win-shortcut `
+            --win-console `
             --app-version 1.0
 
       - name: Upload Standalone EXE
