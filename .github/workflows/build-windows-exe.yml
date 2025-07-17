@@ -31,22 +31,26 @@ jobs:
       - name: Create custom runtime with jlink
         run: |
           jlink `
-            --module-path "javafx-sdk\lib;${env:JAVA_HOME}\jmods" `
-            --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base `
+            --module-path "javafx-sdk\lib;$env:JAVA_HOME\jmods" `
+            --add-modules java.base,java.logging,java.xml,java.desktop,javafx.controls,javafx.fxml,javafx.graphics `
             --output custom-runtime `
-            --strip-debug --compress 2 --no-header-files --no-man-pages
+            --strip-debug --compress=2 --no-header-files --no-man-pages
+
 
       - name: Package App Image
         run: |
           jpackage `
-            --type app-image `
+            --type exe `
             --name DocOverlay `
             --input target `
             --main-jar docoverlay-1.0-SNAPSHOT.jar `
             --main-class com.example.App `
             --runtime-image custom-runtime `
             --dest output `
+            --win-menu `
+            --win-shortcut `
             --app-version 1.0
+
 
       - name: Upload App Image
         uses: actions/upload-artifact@v4
