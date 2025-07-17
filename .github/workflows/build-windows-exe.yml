@@ -1,4 +1,4 @@
-name: Build Windows EXE (No Installer)
+name: Build Windows JavaFX EXE (No Installer)
 
 on:
   push:
@@ -30,21 +30,19 @@ jobs:
             Write-Error "❌ JavaFX SDK not found after extraction."
           }
 
-      - name: Build JAR
+      - name: Build JAR with Maven
         run: mvn clean package
 
-      - name: Create custom JRE
+      - name: Create custom JRE with jlink
         shell: pwsh
         run: |
-          $javafxLib = "javafx-sdk\\lib"
-          $jmods = "$env:JAVA_HOME\\jmods"
           jlink `
-            --module-path "$javafxLib;$jmods" `
+            --module-path "javafx-sdk\lib;$env:JAVA_HOME\jmods" `
             --add-modules java.base,java.desktop,java.logging,javafx.controls,javafx.fxml,javafx.graphics `
             --output custom-runtime `
             --strip-debug --no-header-files --no-man-pages --compress=2
 
-      - name: Package EXE
+      - name: Package EXE (App Image)
         shell: pwsh
         run: |
           jpackage `
@@ -55,13 +53,17 @@ jobs:
             --main-class com.example.App `
             --runtime-image custom-runtime `
             --dest output `
+            --win-menu `
+            --win-shortcut `
             --app-version 1.0 `
-            --win-console `
-            --java-options "-Dprism.order=sw"
+            --java-options "-Dprism.order=sw -Dprism.verbose=true"
 
+      - name: Copy JavaFX native DLLs
+        shell: pwsh
+        run: |
+          Copy-Item -Path "javafx-sdk\bin\*.dll" -Destination "output\DocOverlay\bin" -Force
 
-
-      - name: Upload .exe
+      - name: Upload Windows App Folder (Portable)
         uses: actions/upload-artifact@v4
         with:
           name: DocOverlay-Windows-App
