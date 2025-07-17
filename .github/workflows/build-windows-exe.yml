@@ -53,8 +53,6 @@ jobs:
             --main-class com.example.App `
             --runtime-image custom-runtime `
             --dest output `
-            --win-menu `
-            --win-shortcut `
             --app-version 1.0 `
             --java-options "-Dprism.order=sw -Dprism.verbose=true"
 
